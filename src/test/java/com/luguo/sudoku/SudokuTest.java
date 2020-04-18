@@ -58,9 +58,13 @@ public class SudokuTest {
         };
 
         int count = 0;
+        long starTime = System.currentTimeMillis();
         while(SudokuUtil.refersh(sudoku)){
            count++;
         }
+        long endTime = System.currentTimeMillis();
+        PrintUtil.printLog(endTime-starTime + " 毫秒" );
+
         PrintUtil.printSudokuCell(sudoku);
 
         if(sudoku.isCompeled() && sudoku.checkDuplication()){

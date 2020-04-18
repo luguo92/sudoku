@@ -109,7 +109,7 @@ public class SudokuUtil {
 
     public static void noticeOther(Sudoku sudoku,  Set<Integer> impossibleValueSet, RuleType ruleType, Cell...cell) throws Exception {
 
-        PrintUtil.printLog(impossibleValueSet.toString() + ruleType + Arrays.asList(cell).toString());
+//        PrintUtil.printLog(impossibleValueSet.toString() + ruleType + Arrays.asList(cell).toString());
         for(RuleType rule : RuleType.values()){
             if(null!=ruleType && !rule.equals(ruleType)){
                 continue;
@@ -129,7 +129,7 @@ public class SudokuUtil {
             }
         }
 
-        PrintUtil.printSudokuCell(sudoku);
+//        PrintUtil.printSudokuCell(sudoku);
         return ;
     }
 
@@ -204,7 +204,7 @@ public class SudokuUtil {
     public static boolean refersh(Sudoku sudoku) throws Exception {
         boolean flag = false;
 
-        PrintUtil.printSudokuCell(sudoku);
+//        PrintUtil.printSudokuCell(sudoku);
         Cell curCell = sudoku.sudokuCell;
         while(null!= curCell){
 
