@@ -57,10 +57,13 @@ public class SudokuTest {
         };
 
         int count = 0;
+        long startTime = System.currentTimeMillis();
         while(sudoku.refershCellValue() || sudoku.refershCellValueAdvance()){
             count++;
         }
-        PrintUtil.printSudokuCell(sudoku);
+        long endTime = System.currentTimeMillis();
+        PrintUtil.printLog(endTime - startTime + " 毫秒");
+//        PrintUtil.printSudokuCell(sudoku);
 
         if(sudoku.isAllsetValue() && !sudoku.checkDuplication()){
             PrintUtil.printLog("都被正确填充");
