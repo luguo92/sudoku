@@ -3,200 +3,246 @@ package com.luguo.sudoku.bean;
 import com.luguo.sudoku.rule.BlockRule;
 import com.luguo.sudoku.rule.ColRule;
 import com.luguo.sudoku.rule.RowRule;
-import com.luguo.sudoku.util.PrintUtil;
-import org.springframework.util.StringUtils;
+import com.sun.istack.internal.NotNull;
+import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Iterator;
+import java.util.List;
 
 public class Sudoku {
 
     public static Integer[] allValue = {1,2,3,4,5,6,7,8,9};
     public static Integer MAX_INDEX_VALUE = 9;
+    public static Integer MAX_CELL_VALUE = 81;
     public static Cell sudokuCell;
 
-    public Sudoku(int[][] arr) {
+    public Sudoku(Integer[][] arr) throws Exception {
+        List<Integer> list = new ArrayList<>();
+        for(Integer[] array : arr){
+            list.addAll(Arrays.asList(array));
+        }
 
-        Cell[] upCellList = new Cell[9];
-        Cell[] curCellList = new Cell[9];
-        for(int i=0; i<arr.length ; i++) {
+        init(list);
+    }
 
-            if(i > 0) {
-                upCellList = curCellList;
-                curCellList = new Cell[9];
-            }
+    public Sudoku(List<Integer> list) throws Exception {
+        init(list);
+    }
 
-            Cell preCell = null;
-            for (int j = 0; j < arr[i].length; j++) {
+    /**
+     * 初始化数独， 同时初始化数独内单元格的关联关系
+     * @param list
+     * @throws Exception
+     */
+    private void init(List<Integer> list) throws Exception {
+        if(CollectionUtils.isEmpty(list) || list.size() != MAX_CELL_VALUE){
+            throw new Exception("初始化数据不符合要求");
+        }
 
-                Integer value = arr[i][j];
-                if(StringUtils.isEmpty(value)){
-                    value = 0;
-                }
-                Cell curCell = new Cell();
-                curCell.setPossibleValue(new HashSet<>(Arrays.asList(allValue)));
-                curCell.setInitValue(value);
-                curCell.setColIndex(i);
-                curCell.setRowIndex(j);
+        Iterator<Integer> iterator = list.iterator();
 
-                curCellList[j] = curCell;
+        Cell curCell = null;
+        for(int rowIndex=0 ; rowIndex<MAX_INDEX_VALUE ; rowIndex++){
+            for(int colIndex=0 ; colIndex<MAX_INDEX_VALUE ; colIndex++){
+                int blockIndex = rowIndex/3 * 3 + colIndex/3;
+                Cell newCell = new Cell(rowIndex,colIndex,blockIndex,allValue);
+                newCell.setInitValue(iterator.next());
 
-                if(preCell == null){
-                    preCell = curCell;
-                }
-
-                if( j == 0 && i == 0){
-                    sudokuCell = preCell;
+                if(null == curCell){
+                    curCell = newCell;
+                    sudokuCell = curCell;
                 }else{
-                    if(j>0){
-                        preCell.setRightCell(curCell);
-                        preCell = curCell;
-                    }
-
-                    Cell upCell = upCellList[j];
-                    if(null != upCell){
-                        curCell.setUpCell(upCell);
-                    }
+                    curCell.setNextCell(newCell);
+                    curCell = newCell;
                 }
             }
         }
+
+        curCell = sudokuCell;
+        Cell upCell = null;
+        Cell colCell = curCell;
+        while(null != curCell.getNextCell()){
+            Cell nextCell = curCell.getNextCell();
+
+            if(null != upCell){
+                upCell = upCell.getNextCell();
+            }
+
+            //新的一行
+            if(nextCell.getColIndex() == 0){
+                upCell = colCell;
+                nextCell.setUpCell(upCell);
+                colCell = nextCell;
+            }else{
+                nextCell.setLeftCell(curCell);
+
+                if(null != upCell){
+                    nextCell.setUpCell(upCell);
+                }
+            }
+            curCell = nextCell;
+        }
     }
 
-    public boolean refershCellValue() throws Exception {
-        boolean flag = false;
-        RowRule rowRule = new RowRule() ;
-        if(rowRule.refershCellValue(this)){
-            flag = true;
-        }
-
-
-        ColRule colRule = new ColRule();
-        if(colRule.refershCellValue(this)){
-            flag = true;
-        }
-        BlockRule blockRule = new BlockRule();
-        if(blockRule.refershCellValue(this)){
-            flag = true;
-        }
-
-        return flag;
-    }
-
-    public boolean refershCellValueAdvance() throws Exception {
-        boolean flag = false;
-        RowRule rowRule = new RowRule() ;
-        if(rowRule.refershCellValueAdvance(this)){
-            flag = true;
-        }
-
-
-        ColRule colRule = new ColRule();
-        if(colRule.refershCellValueAdvance(this)){
-            flag = true;
-        }
-        BlockRule blockRule = new BlockRule();
-        if(blockRule.refershCellValueAdvance(this)){
-            flag = true;
-        }
-
-        return flag;
-    }
-
-//    public boolean fillValue() throws Exception {
-//        boolean flag = false;
-//
-//        Cell curCell = this.sudokuCell;
-//        Cell colCell = this.sudokuCell;
-//        while(curCell != null){
-//            Set<Integer> valueSet = curCell.getPossibleValue();
-//            if(curCell.getValue()==0 && curCell.getPossibleValue().size() == 1){
-//                curCell.setValue(valueSet.iterator().next());
-//                flag = true;
-//                PrintUtil.printLog(curCell.toString());
-//                PrintUtil.printLog((HashMap<Integer, String>) curCell.getImpossibleValue());
-//            }
-//
-//            curCell = curCell.getRightCell();
-//            if(curCell == null){
-//                colCell = colCell.getDownCell();
-//                curCell = colCell;
-//            }
-//        }
-//        return flag;
-//    }
-
-    public boolean isAllsetValue(){
-        boolean flag = true;
-
-        Cell curCell = this.sudokuCell;
-        Cell colCell = this.sudokuCell;
+    /**
+     * 检查数独是否填写完成
+     * @return
+     */
+    public boolean isCompeled(){
+        Cell curCell = sudokuCell;
         while(curCell != null){
             if(curCell.getValue()==0){
                 return false;
             }
-
-            curCell = curCell.getRightCell();
-            if(curCell == null){
-                colCell = colCell.getDownCell();
-                curCell = colCell;
-            }
-        }
-
-        return flag;
-    }
-
-
-    public boolean checkDuplication(){
-        RowRule rowRule = new RowRule() ;
-        if(!rowRule.checkDuplication(this)){
-            return false;
-        }
-
-        ColRule colRule = new ColRule();
-        if(!colRule.checkDuplication(this)){
-            return false;
-        }
-
-        BlockRule blockRule = new BlockRule();
-        if(!blockRule.checkDuplication(this)){
-            return false;
+            curCell = curCell.getNextCell();
         }
 
         return true;
     }
 
-//    private static void initSudoku(int[][] arr) {
-//        for(int i=0; i<arr.length ; i++){
-//            for(int j=0; j<arr[i].length; j++){
-//
-//                Integer value = arr[i][j];
-//                if(StringUtils.isEmpty(value)){
-//                    value = 0;
-//                }
-//                Cell cell = new Cell();
-//                cell.setPossibleValue(new HashSet<>(Arrays.asList(allValue)));
-//                cell.setInitValue(value);
-//                cell.setColIndex(i);
-//                cell.setRowIndex(j);
-//                sudoku[i][j] = cell;
-//
-//                if(i>0 && null!=sudoku[i-1][j]){
-//                    cell.setLeftCell(sudoku[i-1][j]);
-//                }
-//                if(i<arr.length-1 && null!=sudoku[i+1][j]){
-//                    cell.setRightCell(sudoku[i+1][j]);
-//                }
-//                if(j>0 && null!=sudoku[i][j-1]){
-//                    cell.setUpCell(sudoku[i][j-1]);
-//                }
-//                if(j<arr.length-1 && null!=sudoku[i][j+1]){
-//                    cell.setDownCell(sudoku[i][j+1]);
-//                }
-//            }
-//        }
-//    }
+
+    /**
+     * 检查是否存在重复
+     * @return
+     */
+    public boolean checkDuplication(){
+        RowRule rowRule = new RowRule() ;
+        if(!rowRule.checkDuplication(this)){
+            return true;
+        }
+
+        ColRule colRule = new ColRule();
+        if(!colRule.checkDuplication(this)){
+            return true;
+        }
+
+        BlockRule blockRule = new BlockRule();
+        if(!blockRule.checkDuplication(this)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 获取第index 行的首个Cell
+     * @param index
+     * @return
+     */
+    public static Cell getRowHeadCell(Integer index){
+        return getColCell(sudokuCell,index);
+    }
+
+    /**
+     * 获取当前行内的下一Cell
+     * @param preCell
+     * @return
+     */
+    public static Cell getNextRowCell(Cell preCell){
+        return preCell.getRightCell();
+    }
+
+    /**
+     * 获取当前行的指定(第index个)Cell
+     * @param headCell
+     * @param index
+     * @return
+     */
+    public static Cell getRowCell(Cell headCell, @NotNull Integer index){
+        Cell curCell = headCell;
+        int i = 0;;
+        while(index > i && curCell != null){
+            curCell = curCell.getRightCell();
+            i++;
+        }
+        return curCell;
+    }
+
+    /**
+     * 获取第index 列的首个Cell
+     * @param index
+     * @return
+     */
+    public static Cell getColHeadCell(@NotNull Integer index){
+        return getRowCell(sudokuCell,index);
+    }
+
+    /**
+     * 获取当前列内的下一Cell
+     * @param preCell
+     * @return
+     */
+    public static Cell getNextColCell(Cell preCell){
+        return preCell.getDownCell();
+    }
+
+    /**
+     * 获取当前行的指定(第index个)Cell
+     * @param headCell
+     * @param index
+     * @return
+     */
+    public static Cell getColCell(Cell headCell, @NotNull Integer index){
+        Cell curCell = headCell;
+        int i = 0;;
+        while(index > i && curCell != null){
+            curCell = curCell.getDownCell();
+            i++;
+        }
+        return curCell;
+    }
+
+    /**
+     * 获取第index 宫的首个Cell
+     * @param index
+     * @return
+     */
+    public static Cell getBlockHeadCell( @NotNull Integer index){
+        return getBlockCell(index, 0);
+    }
+
+    /**
+     * 获取当前宫内的下一Cell
+     * @param index
+     * @param indexInBlock
+     * @return
+     */
+    public static Cell getBlockCell(@NotNull Integer index, @NotNull Integer indexInBlock){
+
+        int rowIndex = index / 3 * 3 + indexInBlock / 3;
+        int colIndex = index % 3 * 3 + indexInBlock % 3;
+        return getCell(rowIndex, colIndex);
+    }
+
+    /**
+     * 获取当前宫内的下一Cell
+     * @param preCell
+     * @return
+     */
+    public static Cell getNextBlockCell(Cell preCell){
+        int rowIndex = preCell.getRowIndex();
+        int colIndex = preCell.getColIndex();
+        int blockIndex = preCell.getBlockIndex();
+        int indexInBlock = (rowIndex%3)*3 + colIndex%3 ;
+        if(indexInBlock >= 8){
+            return null;
+        }
+
+        int nextIndexInBlock = indexInBlock + 1;
+        return getBlockCell(blockIndex,nextIndexInBlock);
+    }
+
+    /**
+     * 获取指定的Cell
+     * @param rowIndex
+     * @param colIndex
+     * @return
+     */
+    private static Cell getCell(Integer rowIndex, Integer colIndex) {
+        return getRowCell(getRowHeadCell(rowIndex),colIndex);
+    }
 
 
 }

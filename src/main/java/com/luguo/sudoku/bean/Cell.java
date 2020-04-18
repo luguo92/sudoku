@@ -1,43 +1,48 @@
 package com.luguo.sudoku.bean;
 
-import com.luguo.sudoku.comm.RuleType;
-import com.luguo.sudoku.rule.MyRule;
+import com.sun.istack.internal.NotNull;
 
 import java.util.*;
 
 public class Cell {
 
-    private final static int[] allValue = {1,2,3,4,5,6,7,8,9};
+    private static Integer[] allValue = null;
     private Integer initValue;
+
     private Integer value;
     private Set<Integer> possibleValue;
     private Map<Integer, String> impossibleValue;
-
-//    private int rowNum;
-//    private int colNum;
 
     private Cell upCell;
     private Cell downCell;
     private Cell leftCell;
     private Cell rightCell;
+    private Cell nextCell;
 
+    private boolean isChanged;
+
+    @NotNull
     private Integer rowIndex;
+    @NotNull
     private Integer colIndex;
+    @NotNull
+    private Integer blockIndex;
 
     private HashMap<Cell,String> checkResult;
 
-
-    public Integer getBlockIndex() {
-        int rowIndex = this.getRowIndex();
-        int colIndex = this.getColIndex();
-
-        return rowIndex/3 + (colIndex/3)*3 + 1;
-    }
-
     Cell(){
-        this.possibleValue = new HashSet<>();
         this.impossibleValue = new HashMap<>();
         this.checkResult = new HashMap<>();
+        this.isChanged = false;
+    }
+
+    Cell(Integer rowIndex, Integer colIndex, Integer blockIndex,Integer[] allValue){
+        this();
+        this.rowIndex = rowIndex;
+        this.colIndex = colIndex;
+        this.blockIndex = blockIndex;
+        this.allValue = allValue;
+        this.possibleValue = new HashSet(Arrays.asList(allValue));
     }
 
     public Integer getValue() {
@@ -53,6 +58,7 @@ public class Cell {
             System.out.println("当前值不可变更");
             throw new Exception();
         }
+        setChanged(true);
     }
 
     public Set<Integer> getPossibleValue() {
@@ -84,6 +90,13 @@ public class Cell {
     public void addImpossibleValue(Integer impossibleValue, String cellSign) {
         this.impossibleValue.put(impossibleValue,cellSign);
         this.possibleValue.remove(impossibleValue);
+        this.isChanged = isChanged;
+    }
+
+    public void addImpossibleValue(Set<Integer> impossibleValueSet, String cellSign) {
+        for(Integer impossibleValue : impossibleValueSet) {
+            addImpossibleValue(impossibleValue,cellSign);
+        }
     }
 
     public void removeImpPossibleValue(Integer impossibleValue) {
@@ -112,6 +125,9 @@ public class Cell {
         if(null == this.downCell) {
             this.downCell = downCell;
         }
+        if(null == downCell.getUpCell()){
+            downCell.setUpCell(this);
+        }
     }
 
     public Cell getLeftCell() {
@@ -121,6 +137,9 @@ public class Cell {
     public void setLeftCell(Cell leftCell) {
         if(null == this.leftCell) {
             this.leftCell = leftCell;
+        }
+        if(null == leftCell.getRightCell()) {
+            leftCell.setRightCell(this);
         }
     }
 
@@ -148,7 +167,9 @@ public class Cell {
                 this.addImpossibleValue(entry, "初始化已赋值");
             }
         }
+        this.isChanged = false;
         this.value = initValue;
+        this.isChanged = true;
     }
 
     public Integer getRowIndex() {
@@ -174,7 +195,7 @@ public class Cell {
             value = null;
         }
         String valueStr = value==null? "*" : String.valueOf(value);
-        return "[" + (this.getColIndex()+1) + "," + (this.getRowIndex()+1) + "] " + valueStr;
+        return "[" + (this.getRowIndex()+1) + "," + (this.getColIndex()+1) + "," + (this.getBlockIndex()+1) +"] " + valueStr;
     }
 
     public HashMap<Cell, String> getCheckResult() {
@@ -187,5 +208,29 @@ public class Cell {
 
     public void addCheckResult(String ruleDesc, Cell cell) {
         this.checkResult.put(cell,ruleDesc);
+    }
+
+    public Integer getBlockIndex() {
+        return blockIndex;
+    }
+
+    public void setBlockIndex(Integer blockIndex) {
+        this.blockIndex = blockIndex;
+    }
+
+    public Cell getNextCell() {
+        return nextCell;
+    }
+
+    public void setNextCell(Cell nextCell) {
+        this.nextCell = nextCell;
+    }
+
+    public boolean isChanged() {
+        return isChanged;
+    }
+
+    public void setChanged(boolean changed) {
+        isChanged = changed;
     }
 }

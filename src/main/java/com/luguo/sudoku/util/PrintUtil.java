@@ -93,7 +93,8 @@ public class PrintUtil {
                 System.out.println();
                 Cell tempCell = colCell;
                 while(tempCell != null){
-                    System.err.print(String.format("%-18s",tempCell.getPossibleValue().size()>1?tempCell.getPossibleValue():""));
+                    String temp = tempCell.getPossibleValue().size()>1?tempCell.getPossibleValue().toString():"";
+                    System.err.print(String.format("%-18s",temp.replace(" ","")));
                     tempCell = tempCell.getRightCell();
                 }
                 System.out.println();

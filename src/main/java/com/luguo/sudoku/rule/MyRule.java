@@ -19,37 +19,4 @@ public interface MyRule {
      */
     boolean checkDuplication(Sudoku sudoku, int index);
 
-    /**
-     * 刷新数据
-     * @param sudoku
-     * @return
-     */
-    boolean refershCellValue(Sudoku sudoku) throws Exception;
-
-    /**
-     * 刷新数据
-     * @param sudoku
-     * @param index
-     * @return
-     * @throws Exception
-     */
-    boolean refershCellValue(Sudoku sudoku, int index) throws Exception;
-
-    /**
-     * 刷新数据
-     * @param sudoku
-     * @return
-     */
-    boolean refershCellValueAdvance(Sudoku sudoku) throws Exception;
-
-    /**
-     * 刷新数据
-     * @param sudoku
-     * @param index
-     * @return
-     * @throws Exception
-     */
-    boolean refershCellValueAdvance(Sudoku sudoku, int index) throws Exception;
-
-    Cell[] getCellArray(Sudoku sudoku,int index);
 }

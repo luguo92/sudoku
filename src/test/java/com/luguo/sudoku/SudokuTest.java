@@ -2,6 +2,7 @@ package com.luguo.sudoku;
 
 import com.luguo.sudoku.bean.Sudoku;
 import com.luguo.sudoku.util.PrintUtil;
+import com.luguo.sudoku.util.SudokuUtil;
 
 public class SudokuTest {
 
@@ -40,31 +41,31 @@ public class SudokuTest {
 
 
 
-        int[][] arr = { {0,5,2,0,8,1,0,6,0},
-                        {0,0,0,0,0,6,5,0,0},
-                        {0,0,9,2,0,0,0,0,0},
-                        {4,0,0,5,0,0,0,0,1},
-                        {0,0,0,0,9,0,0,3,0},
-                        {6,3,1,0,0,0,0,0,0},
-                        {5,0,0,0,0,0,4,0,8},
-                        {9,0,6,0,0,0,7,0,0},
-                        {0,4,0,3,7,5,0,0,0}};
+        Integer[][] arr = { {0,5,2,0,8,1,0,6,0},
+                            {0,0,0,0,0,6,5,0,0},
+                            {0,0,9,2,0,0,0,0,0},
+                            {4,0,0,5,0,0,0,0,1},
+                            {0,0,0,0,9,0,0,3,0},
+                            {6,3,1,0,0,0,0,0,0},
+                            {5,0,0,0,0,0,4,0,8},
+                            {9,0,6,0,0,0,7,0,0},
+                            {0,4,0,3,7,5,0,0,0}};
 
         Sudoku sudoku = new Sudoku(arr);
         PrintUtil.printSudokuCell(sudoku);
-        if(sudoku.isAllsetValue() && !sudoku.checkDuplication()){
+        if(sudoku.isCompeled() && sudoku.checkDuplication()){
             PrintUtil.printLog("都被正确填充");
         };
 
         int count = 0;
-        while(sudoku.refershCellValue() || sudoku.refershCellValueAdvance()){
-            count++;
+        while(SudokuUtil.refersh(sudoku)){
+           count++;
         }
         PrintUtil.printSudokuCell(sudoku);
 
-        if(sudoku.isAllsetValue() && !sudoku.checkDuplication()){
+        if(sudoku.isCompeled() && sudoku.checkDuplication()){
             PrintUtil.printLog("都被正确填充");
-        }else if(!sudoku.isAllsetValue()){
+        }else if(!sudoku.isCompeled()){
             PrintUtil.printLog("未填充完成");
         }else{
             PrintUtil.printLog("存在重复的单元");
