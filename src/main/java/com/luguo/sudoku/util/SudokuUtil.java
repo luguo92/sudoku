@@ -110,7 +110,7 @@ public class SudokuUtil {
 
     public static void noticeOther(Sudoku sudoku,  Set<Integer> impossibleValueSet, RuleType ruleType, Cell...cell) throws Exception {
 
-        PrintUtil.printLog(impossibleValueSet.toString() + ruleType + Arrays.asList(cell).toString());
+//        PrintUtil.printLog(impossibleValueSet.toString() + ruleType + Arrays.asList(cell).toString());
         for(RuleType rule : RuleType.values()){
             if(null!=ruleType && !rule.equals(ruleType)){
                 continue;
@@ -130,7 +130,6 @@ public class SudokuUtil {
             }
         }
 
-        PrintUtil.printSudokuCell(sudoku);
         return ;
     }
 
@@ -143,12 +142,16 @@ public class SudokuUtil {
                 continue;
             }
 
-            curBlockCell.addImpossibleValue(impossibleValueSet, blockSign);
 
-            Set<Integer> valueSet = curBlockCell.getPossibleValue();
-            if(!CollectionUtils.isEmpty(valueSet) && valueSet.size() == 1 && curBlockCell.getValue() == 0){
-                curBlockCell.setValue(valueSet.iterator().next());
-                noticeOther(sudoku,curBlockCell.getValue(),curBlockCell);
+            Set<Integer> valueSetTemp = new HashSet<>(curBlockCell.getPossibleValue());
+            if(valueSetTemp.retainAll(impossibleValueSet) && !CollectionUtils.isEmpty(valueSetTemp)) {
+
+                curBlockCell.addImpossibleValue(impossibleValueSet, blockSign);
+                Set<Integer> valueSet = curBlockCell.getPossibleValue();
+                if (!CollectionUtils.isEmpty(valueSet) && valueSet.size() == 1 && curBlockCell.getValue() == 0) {
+                    curBlockCell.setValue(valueSet.iterator().next());
+//                    noticeOther(sudoku, curBlockCell.getValue(), curBlockCell);
+                }
             }
 
             curBlockCell = sudoku.getNextBlockCell(curBlockCell);
@@ -164,11 +167,15 @@ public class SudokuUtil {
                 continue;
             }
 
-            curColCell.addImpossibleValue(impossibleValueSet, colSign);
-            Set<Integer> valueSet = curColCell.getPossibleValue();
-            if(!CollectionUtils.isEmpty(valueSet) && valueSet.size() == 1 && curColCell.getValue() == 0){
-                curColCell.setValue(valueSet.iterator().next());
-                noticeOther(sudoku,curColCell.getValue(),curColCell);
+            Set<Integer> valueSetTemp = new HashSet<>(curColCell.getPossibleValue());
+            if(valueSetTemp.retainAll(impossibleValueSet) && !CollectionUtils.isEmpty(valueSetTemp)) {
+
+                curColCell.addImpossibleValue(impossibleValueSet, colSign);
+                Set<Integer> valueSet = curColCell.getPossibleValue();
+                if (!CollectionUtils.isEmpty(valueSet) && valueSet.size() == 1 && curColCell.getValue() == 0) {
+                    curColCell.setValue(valueSet.iterator().next());
+//                   noticeOther(sudoku, curColCell.getValue(), curColCell);
+                }
             }
 
             curColCell = sudoku.getNextColCell(curColCell);
@@ -183,12 +190,15 @@ public class SudokuUtil {
                 curRowCell = sudoku.getNextRowCell(curRowCell);
                 continue;
             }
+            Set<Integer> valueSetTemp = new HashSet<>(curRowCell.getPossibleValue());
+            if(valueSetTemp.retainAll(impossibleValueSet) && !CollectionUtils.isEmpty(valueSetTemp)){
 
-            curRowCell.addImpossibleValue(impossibleValueSet, rowSign);
-            Set<Integer> valueSet = curRowCell.getPossibleValue();
-            if(!CollectionUtils.isEmpty(valueSet) && valueSet.size() == 1 && curRowCell.getValue() == 0){
-                curRowCell.setValue(valueSet.iterator().next());
-                noticeOther(sudoku,curRowCell.getValue(),curRowCell);
+                curRowCell.addImpossibleValue(impossibleValueSet, rowSign);
+                Set<Integer> possibleValueSet = curRowCell.getPossibleValue();
+                if(!CollectionUtils.isEmpty(possibleValueSet) && possibleValueSet.size() == 1 && curRowCell.getValue() == 0){
+                    curRowCell.setValue(possibleValueSet.iterator().next());
+//                    noticeOther(sudoku,curRowCell.getValue(),curRowCell);
+                }
             }
 
             curRowCell = sudoku.getNextRowCell(curRowCell);
@@ -230,7 +240,6 @@ public class SudokuUtil {
             return isChanged;
         }
 
-        PrintUtil.printSudokuCell(sudoku);
         Cell curCell = sudoku.sudokuCell;
         while(null!= curCell){
 
@@ -278,6 +287,10 @@ public class SudokuUtil {
 
     private static boolean refreshByCellPossibleValue(Sudoku sudoku, Cell curCell) throws Exception {
         boolean isChanged = false;
+        if(!curCell.isChanged()){
+            return false;
+        }
+
         Set<Integer> possibleValueSet = curCell.getPossibleValue();
         Iterator<Integer> it = possibleValueSet.iterator();
 

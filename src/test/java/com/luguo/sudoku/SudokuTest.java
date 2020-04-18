@@ -41,7 +41,6 @@ public class SudokuTest {
 //                        {2,5,0,6,3,9,1,0,0}};
 
 
-        long startTime = System.currentTimeMillis();
 
         Integer[][] arr = { {0,5,2,0,8,1,0,6,0},
                             {0,0,0,0,0,6,5,0,0},
@@ -59,10 +58,12 @@ public class SudokuTest {
             PrintUtil.printLog("都被正确填充");
         };
 
-        int count = 0;
+        long startTime = System.currentTimeMillis();
         SudokuUtil.refresh(sudoku);
+        long endTime = System.currentTimeMillis();
+        PrintUtil.printLog(LogLevel.ERR, endTime - startTime + "毫秒");
 
-        PrintUtil.printSudokuCell(sudoku);
+//        PrintUtil.printSudokuCell(sudoku);
 
         if(sudoku.isCompeled() && sudoku.checkDuplication()){
             PrintUtil.printLog("都被正确填充");
@@ -73,8 +74,6 @@ public class SudokuTest {
         }
 
 
-        long endTime = System.currentTimeMillis();
-        PrintUtil.printLog(LogLevel.ERR, endTime - startTime + "毫秒");
     }
 
 }

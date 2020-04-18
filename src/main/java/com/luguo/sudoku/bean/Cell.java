@@ -58,7 +58,7 @@ public class Cell {
             System.out.println("当前值不可变更");
             throw new Exception();
         }
-        setChanged(true);
+        this.isChanged = true;
     }
 
     public Set<Integer> getPossibleValue() {
@@ -90,7 +90,7 @@ public class Cell {
     public void addImpossibleValue(Integer impossibleValue, String cellSign) {
         this.impossibleValue.put(impossibleValue,cellSign);
         this.possibleValue.remove(impossibleValue);
-        this.isChanged = isChanged;
+        this.isChanged = true;
     }
 
     public void addImpossibleValue(Set<Integer> impossibleValueSet, String cellSign) {
