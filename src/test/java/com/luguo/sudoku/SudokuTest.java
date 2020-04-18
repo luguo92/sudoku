@@ -65,7 +65,7 @@ public class SudokuTest {
         long endTime = System.currentTimeMillis();
         PrintUtil.printLog(endTime-starTime + " 毫秒" );
 
-        PrintUtil.printSudokuCell(sudoku);
+//        PrintUtil.printSudokuCell(sudoku);
 
         if(sudoku.isCompeled() && sudoku.checkDuplication()){
             PrintUtil.printLog("都被正确填充");
