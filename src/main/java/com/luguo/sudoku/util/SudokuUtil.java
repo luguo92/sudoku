@@ -3,6 +3,7 @@ package com.luguo.sudoku.util;
 import com.luguo.sudoku.bean.Cell;
 import com.luguo.sudoku.bean.Sudoku;
 import com.luguo.sudoku.comm.CellStatus;
+import com.luguo.sudoku.comm.RefreshLevel;
 import com.luguo.sudoku.comm.RuleType;
 import com.sun.istack.internal.NotNull;
 import org.springframework.util.CollectionUtils;
@@ -201,67 +202,117 @@ public class SudokuUtil {
      * @return
      * @throws Exception
      */
-    public static boolean refersh(Sudoku sudoku) throws Exception {
-        boolean flag = false;
+    public static boolean refresh(Sudoku sudoku) throws Exception {
+        boolean isChanged = true;
+        RefreshLevel refreshLevel = RefreshLevel.LOW;
+        int retryTime = 0;
+        while(retryTime <= 1 || isChanged){
+
+            isChanged = refresh(sudoku,refreshLevel);
+
+            if(!isChanged){
+                retryTime++;
+                if(retryTime > 1){
+                    retryTime = 0;
+                    refreshLevel = RefreshLevel.getNextLevel(refreshLevel);
+                    if(null == refreshLevel){
+                        break;
+                    }
+                }
+            }
+        }
+        return isChanged;
+    }
+
+    private static boolean refresh(Sudoku sudoku, RefreshLevel refreshLevel) throws Exception {
+        boolean isChanged = false;
+        if(null == refreshLevel){
+            return isChanged;
+        }
 
         PrintUtil.printSudokuCell(sudoku);
         Cell curCell = sudoku.sudokuCell;
         while(null!= curCell){
 
-            Set<Integer> possibleValueSet = curCell.getPossibleValue();
-            CellStatus cellStatus = getCellStatus(curCell);
-            if(CellStatus.REFRESH.equals(cellStatus) || CellStatus.INIT.equals(cellStatus)){
-                if(CellStatus.INIT.equals(cellStatus)){
-                    curCell.setValue(possibleValueSet.iterator().next());
-                }
-
-                noticeOther(sudoku,curCell.getValue(),curCell);
-                curCell.setChanged(false);
-                flag = true;
-            }
-
-            if(possibleValueSet.size() >= 2 && possibleValueSet.size() < 8){
-                Iterator<Integer> it = possibleValueSet.iterator();
-
-                for(RuleType ruleType : RuleType.values()) {
-                    List<Cell> cellList = new ArrayList<>();
-                    Cell nextCell = curCell;
-
-                    while (it.hasNext() && null!=nextCell) {
-
-                        Set<Integer> nextRowCellPossibleValueSet = nextCell.getPossibleValue();
-                        if (!cellList.contains(nextCell) && possibleValueSet.equals(nextRowCellPossibleValueSet)) {
-                            cellList.add(nextCell);
-                            if(nextCell != curCell){
-                                it.next();
-                            }
-                        }
-                        switch (ruleType){
-                            case ROW:
-                                nextCell = sudoku.getNextRowCell(nextCell);
-                                break;
-                            case COL:
-                                nextCell = sudoku.getNextColCell(nextCell);
-                                break;
-                            case BLOCK:
-                                nextCell = sudoku.getNextBlockCell(nextCell);
-                                break;
-                        }
-                    }
-
-                    if (cellList.size() == possibleValueSet.size()) {
-                        noticeOther(sudoku, possibleValueSet, ruleType, cellList.toArray(new Cell[cellList.size()]));
-                        flag = true;
-                    }
-                }
-
+            if(refreshByCell(sudoku, curCell,refreshLevel) && !isChanged){
+                isChanged = true;
             }
 
             curCell = curCell.getNextCell();
-
         }
 
+        return isChanged;
+    }
+
+    private static boolean refreshByCell(Sudoku sudoku, Cell curCell, RefreshLevel refreshLevel) throws Exception {
+        boolean flag = false;
+        Set<Integer> possibleValueSet = curCell.getPossibleValue();
+        if(refreshLevel.getLevel() >= RefreshLevel.LOW.getLevel()) {
+            CellStatus cellStatus = getCellStatus(curCell);
+            if (CellStatus.REFRESH.equals(cellStatus) || CellStatus.INIT.equals(cellStatus)) {
+                if (CellStatus.INIT.equals(cellStatus)) {
+                    curCell.setValue(possibleValueSet.iterator().next());
+                }
+
+                noticeOther(sudoku, curCell.getValue(), curCell);
+                curCell.setChanged(false);
+                flag = true;
+            }
+        }
+
+        if(refreshLevel.getLevel() >= RefreshLevel.MID.getLevel()) {
+            if (possibleValueSet.size() == 2) {
+                flag = refreshByCellPossibleValue(sudoku, curCell);
+            }
+        }
+
+        if(refreshLevel.getLevel() >= RefreshLevel.HIGH.getLevel()) {
+            if (possibleValueSet.size() > 2 && possibleValueSet.size() < sudoku.MAX_INDEX_VALUE -1) {
+                flag = refreshByCellPossibleValue(sudoku, curCell);
+            }
+        }
+
+
         return flag;
+    }
+
+    private static boolean refreshByCellPossibleValue(Sudoku sudoku, Cell curCell) throws Exception {
+        boolean isChanged = false;
+        Set<Integer> possibleValueSet = curCell.getPossibleValue();
+        Iterator<Integer> it = possibleValueSet.iterator();
+
+        for (RuleType ruleType : RuleType.values()) {
+            List<Cell> cellList = new ArrayList<>();
+            Cell nextCell = curCell;
+
+            while (it.hasNext() && null != nextCell) {
+
+                Set<Integer> nextRowCellPossibleValueSet = nextCell.getPossibleValue();
+                if (!cellList.contains(nextCell) && possibleValueSet.equals(nextRowCellPossibleValueSet)) {
+                    cellList.add(nextCell);
+                    if (nextCell != curCell) {
+                        it.next();
+                    }
+                }
+                switch (ruleType) {
+                    case ROW:
+                        nextCell = sudoku.getNextRowCell(nextCell);
+                        break;
+                    case COL:
+                        nextCell = sudoku.getNextColCell(nextCell);
+                        break;
+                    case BLOCK:
+                        nextCell = sudoku.getNextBlockCell(nextCell);
+                        break;
+                }
+            }
+
+            if (cellList.size() == possibleValueSet.size()) {
+                noticeOther(sudoku, possibleValueSet, ruleType, cellList.toArray(new Cell[cellList.size()]));
+                isChanged = true;
+            }
+        }
+        return isChanged;
     }
 
     private static CellStatus getCellStatus(Cell cell) {

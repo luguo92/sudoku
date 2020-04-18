@@ -1,6 +1,7 @@
 package com.luguo.sudoku;
 
 import com.luguo.sudoku.bean.Sudoku;
+import com.luguo.sudoku.comm.LogLevel;
 import com.luguo.sudoku.util.PrintUtil;
 import com.luguo.sudoku.util.SudokuUtil;
 
@@ -40,6 +41,7 @@ public class SudokuTest {
 //                        {2,5,0,6,3,9,1,0,0}};
 
 
+        long startTime = System.currentTimeMillis();
 
         Integer[][] arr = { {0,5,2,0,8,1,0,6,0},
                             {0,0,0,0,0,6,5,0,0},
@@ -58,9 +60,8 @@ public class SudokuTest {
         };
 
         int count = 0;
-        while(SudokuUtil.refersh(sudoku)){
-           count++;
-        }
+        SudokuUtil.refresh(sudoku);
+
         PrintUtil.printSudokuCell(sudoku);
 
         if(sudoku.isCompeled() && sudoku.checkDuplication()){
@@ -70,7 +71,10 @@ public class SudokuTest {
         }else{
             PrintUtil.printLog("存在重复的单元");
         }
-        System.err.println(count);
+
+
+        long endTime = System.currentTimeMillis();
+        PrintUtil.printLog(LogLevel.ERR, endTime - startTime + "毫秒");
     }
 
 }
