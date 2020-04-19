@@ -10,7 +10,7 @@ public class SudokuTest {
 
     public static void main(String args[]) throws Exception {
 
-//        int[][] arr = { {5,9,3,4,1,6,2,8,7},
+//        Integer[][] arr = { {5,9,3,4,1,6,2,8,7},
 //                        {1,6,8,7,9,2,4,5,3},
 //                        {7,2,4,3,5,8,9,1,6},
 //                        {8,4,2,1,6,7,3,9,5},
@@ -20,7 +20,7 @@ public class SudokuTest {
 //                        {9,3,6,8,4,1,5,7,2},
 //                        {2,5,7,6,3,9,1,4,8}};
 
-//        int[][] arr = { {5,9,3,4,1,6,0,0,0},
+//        Integer[][] arr = { {5,9,3,4,1,6,0,0,0},
 //                        {1,6,0,7,0,2,4,0,3},
 //                        {7,2,4,3,5,8,0,1,6},
 //                        {8,0,0,1,0,0,3,9,0},
@@ -30,7 +30,7 @@ public class SudokuTest {
 //                        {9,0,6,0,4,1,0,7,2},
 //                        {2,5,0,6,3,9,1,0,0}};
 
-//        int[][] arr = { {5,9,3,4,1,6,0,0,0},
+//        Integer[][] arr = { {5,9,3,4,1,6,0,0,0},
 //                        {1,0,0,0,0,0,0,5,3},
 //                        {7,0,0,0,0,0,0,0,0},
 //                        {8,0,0,1,0,0,3,9,0},
@@ -40,7 +40,15 @@ public class SudokuTest {
 //                        {9,0,6,0,4,1,0,7,2},
 //                        {2,5,0,6,3,9,1,0,0}};
 
-
+//        Integer[][] arr = { {0,0,0,0,0,0,0,0,0},
+//                            {0,0,0,0,0,0,0,0,0},
+//                            {0,0,9,2,0,0,0,0,0},
+//                            {4,0,0,5,0,0,0,0,1},
+//                            {0,0,0,0,9,0,0,3,0},
+//                            {6,3,1,0,0,0,0,0,0},
+//                            {5,0,0,0,0,0,4,0,8},
+//                            {9,0,6,0,0,0,7,0,0},
+//                            {0,4,0,3,7,5,0,0,0}};
 
         Integer[][] arr = { {0,5,2,0,8,1,0,6,0},
                             {0,0,0,0,0,6,5,0,0},
@@ -59,11 +67,17 @@ public class SudokuTest {
         };
 
         long startTime = System.currentTimeMillis();
+
         SudokuUtil.refresh(sudoku);
+        PrintUtil.printSudokuCell(sudoku);
+
+//        Sudoku sudoku1 = new Sudoku(sudoku);
+//        SudokuGenerator.tryCompleteSudoku(sudoku, sudoku.sudokuCell,sudoku.sudokuCell.getPossibleValue());
+
         long endTime = System.currentTimeMillis();
         PrintUtil.printLog(LogLevel.ERR, endTime - startTime + "毫秒");
 
-//        PrintUtil.printSudokuCell(sudoku);
+        PrintUtil.printSudokuCell(sudoku);
 
         if(sudoku.isCompeled() && sudoku.checkDuplication()){
             PrintUtil.printLog("都被正确填充");

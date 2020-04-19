@@ -12,6 +12,10 @@ import java.util.*;
 
 public class SudokuUtil {
 
+    private static final class RandomHolder{
+        static final Random randomGenerator = new Random();
+    }
+
     public static Map<String,List<Cell>> checkDuplication(Sudoku sudoku,RuleType ruleType, Cell headCell) {
         HashMap<String,List<Cell>> cellMap = new HashMap<>();
 
@@ -37,7 +41,7 @@ public class SudokuUtil {
                     curCell = sudoku.getNextRowCell(curCell);
                     break;
                 case COL:
-                    curCell = sudoku.getNextRowCell(curCell);
+                    curCell = sudoku.getNextColCell(curCell);
                     break;
                 case BLOCK:
                     curCell = sudoku.getNextBlockCell(curCell);
@@ -50,6 +54,80 @@ public class SudokuUtil {
 
         return cellMap;
     }
+
+    public static boolean checkDuplication(Sudoku sudoku, Cell cell) {
+        return checkDuplication(sudoku,cell,cell.getValue());
+    }
+    /**
+     * 为当前cell检查其所在的行、列、宫 是否与指定值重复
+     * @param sudoku
+     * @param cell
+     * @param value
+     * @return
+     */
+    public static boolean checkDuplication(Sudoku sudoku, Cell cell, Integer value) {
+
+        Map<Integer,String> impossibleValueMap = getImpossibleForCell(sudoku, cell);
+
+        if(impossibleValueMap.keySet().contains(value)){
+            return false;
+        }
+
+        return true;
+    }
+
+    public static Map<Integer,String> getImpossibleForCell(Sudoku sudoku, Cell cell) {
+        Map<Integer,String> impossibleValueMap = new HashMap();
+        for(RuleType ruleType : RuleType.values()) {
+            Cell curCell = null;
+            switch (ruleType) {
+                case ROW:
+                    curCell = sudoku.getRowHeadCell(cell.getRowIndex());
+                    break;
+                case COL:
+                    curCell = sudoku.getColHeadCell(cell.getColIndex());
+                    break;
+                case BLOCK:
+                    curCell = sudoku.getBlockHeadCell(cell.getBlockIndex());
+                    break;
+                default:
+                    break;
+            }
+
+            while (curCell != null) {
+
+                Integer curValue = curCell.getValue();
+                Set<Integer> possibleValueSet = curCell.getPossibleValue();
+                if (curValue > 0 && cell != curCell) {
+                    if(!impossibleValueMap.containsKey(curValue)){
+                        impossibleValueMap.put(curValue,getRuleSign(ruleType,curCell));
+                    }
+                }else if(possibleValueSet.size() == 1 && cell != curCell){
+                    Integer possibleValue = possibleValueSet.iterator().next();
+                    if(!impossibleValueMap.containsKey(possibleValue)){
+                        impossibleValueMap.put(possibleValue,getRuleSign(ruleType,curCell));
+                    }
+                }
+
+
+                switch (ruleType) {
+                    case ROW:
+                        curCell = sudoku.getNextRowCell(curCell);
+                        break;
+                    case COL:
+                        curCell = sudoku.getNextColCell(curCell);
+                        break;
+                    case BLOCK:
+                        curCell = sudoku.getNextBlockCell(curCell);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        return impossibleValueMap;
+    }
+
 
     public static String getSign(Cell cell, RuleType ruleType){
         Integer index = null;
@@ -98,42 +176,43 @@ public class SudokuUtil {
     }
 
 
-    public static void noticeOther(Sudoku sudoku, Integer impossibleValue, Cell...cell) throws Exception {
+    public static HashMap<Cell,Set<Integer>> noticeOther(Sudoku sudoku, Integer value,Cell...cell) throws Exception {
         Set<Integer> impossibleValueSet = new HashSet<>();
-        impossibleValueSet.add(impossibleValue);
-        noticeOther(sudoku,impossibleValueSet,null,cell);
+        impossibleValueSet.add(value);
+        return noticeOther(sudoku,impossibleValueSet,null,cell);
     }
 
-    public static void noticeOther(Sudoku sudoku, Set<Integer> impossibleValueSet, Cell...cell) throws Exception {
-        noticeOther(sudoku,impossibleValueSet,null,cell);
+    public static HashMap<Cell,Set<Integer>> noticeOther(Sudoku sudoku, Set<Integer> valueSet, Cell...cell) throws Exception {
+        return noticeOther(sudoku,valueSet,null,cell);
     }
 
-    public static void noticeOther(Sudoku sudoku,  Set<Integer> impossibleValueSet, RuleType ruleType, Cell...cell) throws Exception {
+    public static HashMap<Cell,Set<Integer>> noticeOther(Sudoku sudoku,  Set<Integer> impossibleValueSet, RuleType ruleType,Cell...cell) throws Exception {
 
-//        PrintUtil.printLog(impossibleValueSet.toString() + ruleType + Arrays.asList(cell).toString());
+        HashMap<Cell,Set<Integer>> cellMap = new HashMap<>();
         for(RuleType rule : RuleType.values()){
             if(null!=ruleType && !rule.equals(ruleType)){
                 continue;
             }
             switch (rule){
                 case ROW:
-                    refreshRow(sudoku, impossibleValueSet, cell);
+                    cellMap.putAll(refreshRow(sudoku, impossibleValueSet, cell));
                     break;
                 case COL:
-                    refreshCol(sudoku, impossibleValueSet, cell);
+                    cellMap.putAll(refreshCol(sudoku, impossibleValueSet, cell));
                     break;
                 case BLOCK:
-                    refreshBlock(sudoku, impossibleValueSet, cell);
+                    cellMap.putAll(refreshBlock(sudoku, impossibleValueSet, cell));
                     break;
                 default:
                     break;
             }
         }
 
-        return ;
+        return cellMap;
     }
 
-    private static void refreshBlock(Sudoku sudoku, Set<Integer> impossibleValueSet, Cell...cell) throws Exception {
+    private static HashMap<Cell,Set<Integer>>  refreshBlock(Sudoku sudoku, Set<Integer> impossibleValueSet, Cell... cell) throws Exception {
+        HashMap<Cell,Set<Integer>> cellMap = new HashMap<>();
         String blockSign = SudokuUtil.getRuleSign(RuleType.BLOCK,cell);
         Cell curBlockCell = sudoku.getBlockHeadCell(cell[0].getBlockIndex());
         while(curBlockCell != null){
@@ -142,23 +221,17 @@ public class SudokuUtil {
                 continue;
             }
 
-
-            Set<Integer> valueSetTemp = new HashSet<>(curBlockCell.getPossibleValue());
-            if(valueSetTemp.retainAll(impossibleValueSet) && !CollectionUtils.isEmpty(valueSetTemp)) {
-
-                curBlockCell.addImpossibleValue(impossibleValueSet, blockSign);
-                Set<Integer> valueSet = curBlockCell.getPossibleValue();
-                if (!CollectionUtils.isEmpty(valueSet) && valueSet.size() == 1 && curBlockCell.getValue() == 0) {
-                    curBlockCell.setValue(valueSet.iterator().next());
-//                    noticeOther(sudoku, curBlockCell.getValue(), curBlockCell);
-                }
+            if(refreshCell(impossibleValueSet, blockSign, curBlockCell)){
+                cellMap.put(curBlockCell,impossibleValueSet);
             }
 
             curBlockCell = sudoku.getNextBlockCell(curBlockCell);
         }
+        return cellMap;
     }
 
-    private static void refreshCol(Sudoku sudoku, Set<Integer> impossibleValueSet, Cell...cell) throws Exception {
+    private static HashMap<Cell,Set<Integer>> refreshCol(Sudoku sudoku, Set<Integer> impossibleValueSet, Cell... cell) throws Exception {
+        HashMap<Cell,Set<Integer>> cellMap = new HashMap<>();
         String colSign = SudokuUtil.getRuleSign(RuleType.COL,cell);
         Cell curColCell = sudoku.getColHeadCell(cell[0].getColIndex());
         while(curColCell != null){
@@ -167,22 +240,17 @@ public class SudokuUtil {
                 continue;
             }
 
-            Set<Integer> valueSetTemp = new HashSet<>(curColCell.getPossibleValue());
-            if(valueSetTemp.retainAll(impossibleValueSet) && !CollectionUtils.isEmpty(valueSetTemp)) {
-
-                curColCell.addImpossibleValue(impossibleValueSet, colSign);
-                Set<Integer> valueSet = curColCell.getPossibleValue();
-                if (!CollectionUtils.isEmpty(valueSet) && valueSet.size() == 1 && curColCell.getValue() == 0) {
-                    curColCell.setValue(valueSet.iterator().next());
-//                   noticeOther(sudoku, curColCell.getValue(), curColCell);
-                }
+            if(refreshCell(impossibleValueSet, colSign, curColCell)){
+                cellMap.put(curColCell,impossibleValueSet);
             }
 
             curColCell = sudoku.getNextColCell(curColCell);
         }
+        return cellMap;
     }
 
-    private static void refreshRow(Sudoku sudoku, Set<Integer> impossibleValueSet, Cell...cell) throws Exception {
+    private static HashMap<Cell,Set<Integer>> refreshRow(Sudoku sudoku, Set<Integer> impossibleValueSet, Cell... cell) throws Exception {
+        HashMap<Cell,Set<Integer>> cellMap = new HashMap<>();
         String rowSign = SudokuUtil.getRuleSign(RuleType.ROW,cell);
         Cell curRowCell = sudoku.getRowHeadCell(cell[0].getRowIndex());
         while(curRowCell != null){
@@ -190,19 +258,48 @@ public class SudokuUtil {
                 curRowCell = sudoku.getNextRowCell(curRowCell);
                 continue;
             }
-            Set<Integer> valueSetTemp = new HashSet<>(curRowCell.getPossibleValue());
-            if(valueSetTemp.retainAll(impossibleValueSet) && !CollectionUtils.isEmpty(valueSetTemp)){
-
-                curRowCell.addImpossibleValue(impossibleValueSet, rowSign);
-                Set<Integer> possibleValueSet = curRowCell.getPossibleValue();
-                if(!CollectionUtils.isEmpty(possibleValueSet) && possibleValueSet.size() == 1 && curRowCell.getValue() == 0){
-                    curRowCell.setValue(possibleValueSet.iterator().next());
-//                    noticeOther(sudoku,curRowCell.getValue(),curRowCell);
-                }
+            if(refreshCell(impossibleValueSet, rowSign, curRowCell)){
+                cellMap.put(curRowCell,impossibleValueSet);
             }
 
             curRowCell = sudoku.getNextRowCell(curRowCell);
+        }
+        return cellMap;
+    }
 
+    /**
+     * 刷新Cell
+     * @param valueSet
+     * @param cellSign
+     * @param curCell
+     * @return
+     * @throws Exception
+     */
+    private static boolean refreshCell(Set<Integer> valueSet, String cellSign, Cell curCell) throws Exception {
+        Set<Integer> valueSetTemp = new HashSet<>(curCell.getPossibleValue());
+        if (valueSetTemp.retainAll(valueSet) && !CollectionUtils.isEmpty(valueSetTemp)) {
+            curCell.addImpossibleValue(valueSetTemp, cellSign);
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * 撤销因某字段被指定值而带来的一系列修改
+     * @param curCell
+     * @param cellMap
+     * @throws Exception
+     */
+    public static void reverseRefreshNotice(Cell curCell, Map<Cell, Set<Integer>> cellMap) throws Exception {
+        for(Map.Entry<Cell,Set<Integer>> entry : cellMap.entrySet()){
+            Set<Integer> valueSet = entry.getValue();
+            for(Integer value : valueSet){
+                entry.getKey().removeImpPossibleValue(value);
+            }
+        }
+        if(curCell.getInitValue() == 0){
+            curCell.setValue(0);
         }
     }
 
@@ -234,7 +331,7 @@ public class SudokuUtil {
         return isChanged;
     }
 
-    private static boolean refresh(Sudoku sudoku, RefreshLevel refreshLevel) throws Exception {
+    public static boolean refresh(Sudoku sudoku, RefreshLevel refreshLevel) throws Exception {
         boolean isChanged = false;
         if(null == refreshLevel){
             return isChanged;
@@ -253,7 +350,7 @@ public class SudokuUtil {
         return isChanged;
     }
 
-    private static boolean refreshByCell(Sudoku sudoku, Cell curCell, RefreshLevel refreshLevel) throws Exception {
+    public static boolean refreshByCell(Sudoku sudoku, Cell curCell, RefreshLevel refreshLevel) throws Exception {
         boolean flag = false;
         Set<Integer> possibleValueSet = curCell.getPossibleValue();
         if(refreshLevel.getLevel() >= RefreshLevel.LOW.getLevel()) {
@@ -321,8 +418,10 @@ public class SudokuUtil {
             }
 
             if (cellList.size() == possibleValueSet.size()) {
-                noticeOther(sudoku, possibleValueSet, ruleType, cellList.toArray(new Cell[cellList.size()]));
-                isChanged = true;
+                HashMap<Cell,Set<Integer>> cellMap= noticeOther(sudoku, possibleValueSet, ruleType, cellList.toArray(new Cell[cellList.size()]));
+                if(!CollectionUtils.isEmpty(cellMap)){
+                    isChanged = true;
+                }
             }
         }
         return isChanged;
@@ -344,18 +443,98 @@ public class SudokuUtil {
         }
     }
 
-
-    public static void main(String args[]) {
-
-        for (int index = 0; index < 9; index++){
-            for(int indexInBlock=0; indexInBlock<9; indexInBlock ++) {
-                int rowIndex = index / 3 * 3 + indexInBlock / 3;
-                int colIndex = index % 3 * 3 + indexInBlock % 3;
-
-                System.out.println(index + "宫" + indexInBlock + "个单元格: [" + rowIndex + "," + colIndex + "]");
-
-            }
+    /**
+     * 创建一个空的二维数组
+     * @return
+     */
+    public static Integer[][] createEmptyArray(){
+        Integer[][] arr = new Integer[9][9];
+        for(Integer[] entry : arr){
+            Arrays.fill(entry, 0);
         }
+        return arr;
+    }
+
+    public static Integer getRandomInt(Integer maxLimit){
+        return RandomHolder.randomGenerator.nextInt(maxLimit);
+    }
+
+    /**
+     * 复制数独
+     * @param oldSudoku
+     * @param copyAsTemplate
+     *         true  将原数独作为模板进行填充（value当作initValue填充）
+     *         false 与原数独完全保持一致
+     * @return
+     */
+    public static Sudoku copy(Sudoku oldSudoku,boolean copyAsTemplate){
+
+        Sudoku newSudoku = new Sudoku();
+
+        newSudoku.sudokuCell = new Cell(oldSudoku.sudokuCell);
+        copyCell(newSudoku.sudokuCell ,oldSudoku.sudokuCell,copyAsTemplate);
+
+        newSudoku.genCellRelation();
+
+        return newSudoku;
+    }
+
+    public static void copyCell(Cell newCell, Cell oldCell, boolean copyAsTemplate) {
+
+        if(copyAsTemplate && newCell.getValue() > 0 && newCell.getInitValue() == 0) {
+            newCell.setInitValue(newCell.getValue());
+        }
+
+        if(oldCell.getNextCell() == null){
+            return;
+        }
+
+        Cell nextCell = new Cell(oldCell.getNextCell());
+        newCell.setNextCell(nextCell);
+        copyCell(nextCell, oldCell.getNextCell(), copyAsTemplate);
+
+    }
+
+
+    public static void main(String args[]) throws Exception {
+
+//        while(true) {
+//            Random random = new Random();
+//            PrintUtil.printLog(random.nextInt(Sudoku.MAX_INDEX_VALUE) + 1 + "");
+//        }
+
+
+
+        Set<Integer> a = new HashSet<>();
+        a.add(1);
+        a.add(3);
+        a.add(4);
+        a.add(5);
+
+        Set<Integer> b = new HashSet<>();
+        b.add(2);
+        b.add(4);
+        b.add(5);
+        b.add(8);
+        System.out.println(a);
+//        a.addAll(b);
+//        System.out.println(a);
+        a.retainAll(b);
+        System.out.println(a);
+
+//        Sudoku sudoku = new Sudoku(createEmptyArray());
+//
+//        PrintUtil.printSudokuCell(sudoku);
+
+//        for (int index = 0; index < 9; index++){
+//            for(int indexInBlock=0; indexInBlock<9; indexInBlock ++) {
+//                int rowIndex = index / 3 * 3 + indexInBlock / 3;
+//                int colIndex = index % 3 * 3 + indexInBlock % 3;
+//
+//                System.out.println(index + "宫" + indexInBlock + "个单元格: [" + rowIndex + "," + colIndex + "]");
+//
+//            }
+//        }
 
 
 //        for (int rowIndex = 0; rowIndex < 9; rowIndex++){

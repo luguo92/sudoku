@@ -1,6 +1,7 @@
 package com.luguo.sudoku.bean;
 
 import com.sun.istack.internal.NotNull;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
@@ -30,13 +31,13 @@ public class Cell {
 
     private HashMap<Cell,String> checkResult;
 
-    Cell(){
+    public Cell(){
         this.impossibleValue = new HashMap<>();
         this.checkResult = new HashMap<>();
         this.isChanged = false;
     }
 
-    Cell(Integer rowIndex, Integer colIndex, Integer blockIndex,Integer[] allValue){
+    public Cell(Integer rowIndex, Integer colIndex, Integer blockIndex,Integer[] allValue){
         this();
         this.rowIndex = rowIndex;
         this.colIndex = colIndex;
@@ -45,19 +46,42 @@ public class Cell {
         this.possibleValue = new HashSet(Arrays.asList(allValue));
     }
 
+    public Cell(@NotNull Cell oldCell){
+
+        this.allValue = oldCell.allValue;
+        this.initValue = oldCell.initValue;
+        this.value = oldCell.value;
+        this.possibleValue = oldCell.possibleValue;
+        this.impossibleValue = oldCell.impossibleValue;
+
+        this.isChanged = oldCell.isChanged;
+
+        this.rowIndex = oldCell.rowIndex;
+        this.colIndex = oldCell.colIndex;
+        this.blockIndex = oldCell.blockIndex;
+
+        this.checkResult = oldCell.checkResult;
+    }
+
     public Integer getValue() {
         return value;
     }
 
-    public void setValue(Integer value) throws Exception {
-        if(null == initValue || initValue == 0){
-            this.value = value;
-        }else if(initValue.compareTo(value) == 0 && null == this.value){
-            this.value = value;
-        }else{
+    public void setValue(@NotNull Integer value) throws Exception {
+        if(initValue > 0 && initValue.compareTo(value) != 0){
             System.out.println("当前值不可变更");
             throw new Exception();
         }
+        this.value = value;
+
+//        if(value > 0 ) {
+////            Set<Integer> impossibleValueSet = new HashSet<>(possibleValue);
+////            impossibleValueSet.remove(value);
+////            this.addImpossibleValue(impossibleValueSet, "尝试指定赋值");
+////        }else{
+////            removeImpPossibleValue(value);
+////        }
+
         this.isChanged = true;
     }
 
@@ -99,9 +123,24 @@ public class Cell {
         }
     }
 
-    public void removeImpPossibleValue(Integer impossibleValue) {
-        this.impossibleValue.remove(impossibleValue);
-        this.possibleValue.add(impossibleValue);
+    public void addImpossibleValue(Map<Integer,String > valueMap) {
+        for(Map.Entry<Integer,String > entry : valueMap.entrySet()) {
+            addImpossibleValue(entry.getKey(),entry.getValue());
+        }
+    }
+
+    public void removeImpPossibleValue(Integer possibleValue) {
+        this.impossibleValue.remove(possibleValue);
+        this.possibleValue.add(possibleValue);
+        this.isChanged = true;
+    }
+
+    public void removeImpPossibleValue(Set<Integer> valueSet) {
+        for(Integer value : valueSet) {
+            if(impossibleValue.containsKey(value)) {
+                removeImpPossibleValue(value);
+            }
+        }
     }
 
     public Cell getUpCell() {
@@ -162,12 +201,13 @@ public class Cell {
 
     public void setInitValue(Integer initValue) {
         this.initValue = initValue;
-        for(int entry : allValue){
-            if(initValue != 0 && Integer.valueOf(entry).compareTo(initValue) != 0){
-                this.addImpossibleValue(entry, "初始化已赋值");
-            }
+
+        if(initValue > 0 ) {
+            Set<Integer> impossibleValueSet = new HashSet<>(possibleValue);
+            impossibleValueSet.remove(initValue);
+            this.addImpossibleValue(impossibleValueSet, "初始化已赋值");
         }
-        this.isChanged = false;
+
         this.value = initValue;
         this.isChanged = true;
     }
@@ -195,7 +235,8 @@ public class Cell {
             value = null;
         }
         String valueStr = value==null? "*" : String.valueOf(value);
-        return "[" + (this.getRowIndex()+1) + "," + (this.getColIndex()+1) + "," + (this.getBlockIndex()+1) +"] " + valueStr;
+        String initvalueStr = this.getInitValue()==null? "*" : String.valueOf(this.getInitValue());
+        return "[" + (this.getRowIndex()+1) + "," + (this.getColIndex()+1) + "," + (this.getBlockIndex()+1) +"] " + initvalueStr +"  " + valueStr;
     }
 
     public HashMap<Cell, String> getCheckResult() {

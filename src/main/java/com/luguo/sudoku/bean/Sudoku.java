@@ -1,8 +1,10 @@
 package com.luguo.sudoku.bean;
 
+import com.luguo.sudoku.comm.LogLevel;
 import com.luguo.sudoku.rule.BlockRule;
 import com.luguo.sudoku.rule.ColRule;
 import com.luguo.sudoku.rule.RowRule;
+import com.luguo.sudoku.util.PrintUtil;
 import com.sun.istack.internal.NotNull;
 import org.springframework.util.CollectionUtils;
 
@@ -16,7 +18,26 @@ public class Sudoku {
     public static Integer[] allValue = {1,2,3,4,5,6,7,8,9};
     public static Integer MAX_INDEX_VALUE = 9;
     public static Integer MAX_CELL_VALUE = 81;
-    public static Cell sudokuCell;
+    public Cell sudokuCell;
+
+    public Sudoku(){
+        PrintUtil.printLog(LogLevel.ERR, "无参构造函数");
+    }
+
+    public Sudoku(Sudoku instance) throws Exception {
+        init(instance.toList());
+    }
+
+    public List<Integer> toList(){
+
+        List<Integer> valueList = new ArrayList<>();
+        Cell curCell = this.sudokuCell;
+        while(null != curCell){
+            valueList.add(curCell.getValue());
+            curCell = curCell.getNextCell();
+        }
+        return valueList;
+    }
 
     public Sudoku(Integer[][] arr) throws Exception {
         List<Integer> list = new ArrayList<>();
@@ -60,7 +81,11 @@ public class Sudoku {
             }
         }
 
-        curCell = sudokuCell;
+        genCellRelation();
+    }
+
+    public void genCellRelation() {
+        Cell curCell = sudokuCell;
         Cell upCell = null;
         Cell colCell = curCell;
         while(null != curCell.getNextCell()){
@@ -131,7 +156,7 @@ public class Sudoku {
      * @param index
      * @return
      */
-    public static Cell getRowHeadCell(Integer index){
+    public Cell getRowHeadCell(Integer index){
         return getColCell(sudokuCell,index);
     }
 
@@ -140,7 +165,7 @@ public class Sudoku {
      * @param preCell
      * @return
      */
-    public static Cell getNextRowCell(Cell preCell){
+    public Cell getNextRowCell(Cell preCell){
         return preCell.getRightCell();
     }
 
@@ -150,7 +175,7 @@ public class Sudoku {
      * @param index
      * @return
      */
-    public static Cell getRowCell(Cell headCell, @NotNull Integer index){
+    public Cell getRowCell(Cell headCell, @NotNull Integer index){
         Cell curCell = headCell;
         int i = 0;;
         while(index > i && curCell != null){
@@ -165,7 +190,7 @@ public class Sudoku {
      * @param index
      * @return
      */
-    public static Cell getColHeadCell(@NotNull Integer index){
+    public Cell getColHeadCell(@NotNull Integer index){
         return getRowCell(sudokuCell,index);
     }
 
@@ -174,7 +199,7 @@ public class Sudoku {
      * @param preCell
      * @return
      */
-    public static Cell getNextColCell(Cell preCell){
+    public Cell getNextColCell(Cell preCell){
         return preCell.getDownCell();
     }
 
@@ -184,7 +209,7 @@ public class Sudoku {
      * @param index
      * @return
      */
-    public static Cell getColCell(Cell headCell, @NotNull Integer index){
+    public Cell getColCell(Cell headCell, @NotNull Integer index){
         Cell curCell = headCell;
         int i = 0;;
         while(index > i && curCell != null){
@@ -199,7 +224,7 @@ public class Sudoku {
      * @param index
      * @return
      */
-    public static Cell getBlockHeadCell( @NotNull Integer index){
+    public Cell getBlockHeadCell( @NotNull Integer index){
         return getBlockCell(index, 0);
     }
 
@@ -209,7 +234,7 @@ public class Sudoku {
      * @param indexInBlock
      * @return
      */
-    public static Cell getBlockCell(@NotNull Integer index, @NotNull Integer indexInBlock){
+    public Cell getBlockCell(@NotNull Integer index, @NotNull Integer indexInBlock){
 
         int rowIndex = index / 3 * 3 + indexInBlock / 3;
         int colIndex = index % 3 * 3 + indexInBlock % 3;
@@ -221,7 +246,7 @@ public class Sudoku {
      * @param preCell
      * @return
      */
-    public static Cell getNextBlockCell(Cell preCell){
+    public Cell getNextBlockCell(Cell preCell){
         int rowIndex = preCell.getRowIndex();
         int colIndex = preCell.getColIndex();
         int blockIndex = preCell.getBlockIndex();
@@ -240,9 +265,42 @@ public class Sudoku {
      * @param colIndex
      * @return
      */
-    private static Cell getCell(Integer rowIndex, Integer colIndex) {
+    private Cell getCell(Integer rowIndex, Integer colIndex) {
         return getRowCell(getRowHeadCell(rowIndex),colIndex);
     }
 
+    @Override
+    public String toString() {
 
+        StringBuffer sb = new StringBuffer();
+        Cell curCell = sudokuCell;
+        Cell colCell = sudokuCell;
+        while (true){
+
+            sb.append(String.format("%-18s",curCell));
+            curCell = curCell.getRightCell();
+
+            //指定下一行
+            if(curCell == null){
+                sb.append("\n");
+                Cell tempCell = colCell;
+                while(tempCell != null){
+                    String temp = tempCell.getPossibleValue().size()>0?tempCell.getPossibleValue().toString():"";
+                    sb.append(String.format("%-18s",temp.replace(" ","")));
+                    tempCell = tempCell.getRightCell();
+                }
+                sb.append("\n");
+                sb.append("\n");
+
+
+                colCell = colCell.getDownCell();
+                if(colCell == null){
+                    break;
+                }
+                curCell = colCell;
+            }
+        }
+        sb.append("\n");
+        return sb.toString();
+    }
 }
