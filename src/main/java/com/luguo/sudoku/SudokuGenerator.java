@@ -3,6 +3,7 @@ package com.luguo.sudoku;
 import com.luguo.sudoku.bean.Cell;
 import com.luguo.sudoku.bean.Sudoku;
 import com.luguo.sudoku.comm.Flow;
+import com.luguo.sudoku.comm.LogLevel;
 import com.luguo.sudoku.util.PrintUtil;
 import com.luguo.sudoku.util.SudokuUtil;
 import org.springframework.util.CollectionUtils;
@@ -30,27 +31,20 @@ public class SudokuGenerator {
             return true;
         }
 
-//        if(null == curPossibleValueSet){
-//            curPossibleValueSet = new HashSet<>(curCell.getPossibleValue());
-//        }
-
-        if(CollectionUtils.isEmpty(curPossibleValueSet) && !CollectionUtils.isEmpty(curCell.getPossibleValue())){
+        if(CollectionUtils.isEmpty(curPossibleValueSet)){
             return false;
         }
 
         Integer curValue = null;
         Iterator<Integer> iterator = curPossibleValueSet.iterator();
 
-        if(curCell.getValue()<=0) {
-            Integer times = SudokuUtil.getRandomInt(curPossibleValueSet.size());
-            for (int i = 0; i < times; i++) {
-                iterator.next();
-            }
-            curValue = iterator.next();
-            iterator.remove();
-        }else{
-            curValue = curCell.getValue();
+        Integer times = SudokuUtil.getRandomInt(curPossibleValueSet.size());
+        for (int i = 0; i < times; i++) {
+            iterator.next();
         }
+        curValue = iterator.next();
+        iterator.remove();
+
         if(SudokuUtil.checkDuplication(sudoku,curCell,curValue)){
             curCell.setValue(curValue);
             Map<Cell,Set<Integer>> cellMap = SudokuUtil.noticeOther(sudoku, curValue, curCell);
@@ -68,30 +62,26 @@ public class SudokuGenerator {
                 SudokuUtil.reverseRefreshNotice(curCell, cellMap);
 
                 if (iterator.hasNext()) {
+                    //返回上一流程
                     return tryCompleteSudoku(sudoku, preCell, prePossibleValueSet);
                 }else {
                     return false;
                 }
+            }else{
+                return true;
             }
         }else{
             if(!iterator.hasNext()){
                 return false;
             }else{
-                if(!tryCompleteSudoku(sudoku, curCell, curPossibleValueSet)){
-                    if (iterator.hasNext()) {
-                        return tryCompleteSudoku(sudoku, curCell, curPossibleValueSet);
-                    }else {
-                        return false;
-                    }
-                }
+                return tryCompleteSudoku(sudoku, curCell, curPossibleValueSet);
             }
         }
-
-        return true;
     }
 
     public static void main(String args[]) throws Exception {
         Sudoku sudoku = createEmptySudoku();
+        long startTime = System.currentTimeMillis();
         if(sudoku.isCompeled() && sudoku.checkDuplication()){
             PrintUtil.printLog("都被正确填充");
         }else if(!sudoku.isCompeled()){
@@ -99,6 +89,8 @@ public class SudokuGenerator {
         }else{
             PrintUtil.printLog("存在重复的单元");
         }
+        long endTime = System.currentTimeMillis();
+        PrintUtil.printLog(LogLevel.ERR, endTime - startTime + "毫秒");
 
         /*虽然set是无序的， set.iterator().next() 的顺序是可以预期的
         即在set不发生变更的情况下 第一次调用next 获取的值都是一样的， 第二次 第N次都是一样
