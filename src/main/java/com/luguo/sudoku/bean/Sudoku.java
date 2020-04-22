@@ -265,7 +265,7 @@ public class Sudoku {
      * @param colIndex
      * @return
      */
-    private Cell getCell(Integer rowIndex, Integer colIndex) {
+    public Cell getCell(Integer rowIndex, Integer colIndex) {
         return getRowCell(getRowHeadCell(rowIndex),colIndex);
     }
 

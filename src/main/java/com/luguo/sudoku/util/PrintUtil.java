@@ -81,34 +81,28 @@ public class PrintUtil {
     }
 
     public static void printSudokuCell(Sudoku sudoku) {
+
         Cell curCell = sudoku.sudokuCell;
-        Cell colCell = sudoku.sudokuCell;
-        while (true){
-
-            System.out.print(String.format("%-18s",curCell));
-            curCell = curCell.getRightCell();
-
-            //指定下一行
-            if(curCell == null){
+        while(curCell!=null){
+            System.out.print(curCell.getValue()==0?"  ":curCell.getValue() + " ");
+            if(curCell.getRightCell() == null){
                 System.out.println();
-                Cell tempCell = colCell;
-                while(tempCell != null){
-                    String temp = tempCell.getPossibleValue().size()>1?tempCell.getPossibleValue().toString():"";
-                    System.err.print(String.format("%-18s",temp.replace(" ","")));
-                    tempCell = tempCell.getRightCell();
-                }
-                System.out.println();
-                System.out.println();
+            }
+            curCell = curCell.getNextCell();
+        }
+    }
 
-
-                colCell = colCell.getDownCell();
-                if(colCell == null){
-                    break;
-                }
-                curCell = colCell;
+    public static void printCallStatck() {
+        Throwable ex = new Throwable();
+        StackTraceElement[] stackElements = ex.getStackTrace();
+        if (stackElements != null) {
+            for (int i = 0; i < stackElements.length; i++) {
+                System.out.print(stackElements[i].getClassName()+"/t");
+                System.out.print(stackElements[i].getFileName()+"/t");
+                System.out.print(stackElements[i].getLineNumber()+"/t");
+                System.out.println(stackElements[i].getMethodName());
+                System.out.println("-----------------------------------");
             }
         }
-        System.out.println();
-        System.out.println();
     }
 }

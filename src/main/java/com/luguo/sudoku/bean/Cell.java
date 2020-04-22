@@ -75,12 +75,12 @@ public class Cell {
         this.value = value;
 
 //        if(value > 0 ) {
-////            Set<Integer> impossibleValueSet = new HashSet<>(possibleValue);
-////            impossibleValueSet.remove(value);
-////            this.addImpossibleValue(impossibleValueSet, "尝试指定赋值");
-////        }else{
-////            removeImpPossibleValue(value);
-////        }
+//            Set<Integer> impossibleValueSet = new HashSet<>(possibleValue);
+//            impossibleValueSet.remove(value);
+//            this.addImpossibleValue(impossibleValueSet, "尝试指定赋值");
+//        }else{
+//            removeImpPossibleValue(value);
+//        }
 
         this.isChanged = true;
     }
@@ -261,6 +261,18 @@ public class Cell {
 
     public Cell getNextCell() {
         return nextCell;
+    }
+
+    public Cell getNextNullCell() {
+        Cell curCell = nextCell;
+        while(curCell != null){
+            if(curCell.getValue() > 0){
+                curCell = curCell.getNextCell();
+            }else{
+                break;
+            }
+        }
+        return curCell;
     }
 
     public void setNextCell(Cell nextCell) {

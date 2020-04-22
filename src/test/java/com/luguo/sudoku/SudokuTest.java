@@ -48,7 +48,8 @@ public class SudokuTest {
 //                            {6,3,1,0,0,0,0,0,0},
 //                            {5,0,0,0,0,0,4,0,8},
 //                            {9,0,6,0,0,0,7,0,0},
-//                            {0,4,0,3,7,5,0,0,0}};
+//                            {1,4,8,3,7,5,2,9,6}};
+
 
         Integer[][] arr = { {0,5,2,0,8,1,0,6,0},
                             {0,0,0,0,0,6,5,0,0},
@@ -56,36 +57,44 @@ public class SudokuTest {
                             {4,0,0,5,0,0,0,0,1},
                             {0,0,0,0,9,0,0,3,0},
                             {6,3,1,0,0,0,0,0,0},
-                            {5,0,0,0,0,0,4,0,8},
-                            {9,0,6,0,0,0,7,0,0},
-                            {0,4,0,3,7,5,0,0,0}};
+                            {0,0,0,0,0,0,4,0,8},
+                            {0,0,0,0,0,0,7,0,0},
+                            {0,0,0,0,0,0,0,0,0}};
 
-        Sudoku sudoku = new Sudoku(arr);
-        PrintUtil.printSudokuCell(sudoku);
-        if(sudoku.isCompeled() && sudoku.checkDuplication()){
-            PrintUtil.printLog("都被正确填充");
-        };
+//        Integer[][] arr = { {0,5,2,0,8,1,0,6,0},
+//                            {0,0,0,0,0,6,5,0,0},
+//                            {0,0,9,2,0,0,0,0,0},
+//                            {4,0,0,5,0,0,0,0,1},
+//                            {0,0,0,0,9,0,0,3,0},
+//                            {6,3,1,0,0,0,0,0,0},
+//                            {5,0,0,0,0,0,4,0,8},
+//                            {9,0,6,0,0,0,7,0,0},
+//                            {0,4,0,3,7,5,0,0,0}};
 
-        long startTime = System.currentTimeMillis();
+            Sudoku sudoku = new Sudoku(arr);
+            long startTime = System.currentTimeMillis();
 
-        SudokuUtil.refresh(sudoku);
-        PrintUtil.printSudokuCell(sudoku);
+            SudokuUtil.refresh(sudoku);
+//            PrintUtil.printSudokuCell(sudoku);
 
-//        Sudoku sudoku1 = new Sudoku(sudoku);
-//        SudokuGenerator.tryCompleteSudoku(sudoku, sudoku.sudokuCell,sudoku.sudokuCell.getPossibleValue());
+            Sudoku sudoku1 = new Sudoku(sudoku);
+            PrintUtil.printSudokuCell(sudoku1);
+//            while(!sudoku1.isCompeled()) {
+                SudokuGenerator.tryCompleteSudoku(sudoku1, sudoku1.sudokuCell, sudoku1.sudokuCell.getPossibleValue());
+                PrintUtil.printSudokuCell(sudoku1);
+//            }
 
-        long endTime = System.currentTimeMillis();
-        PrintUtil.printLog(LogLevel.ERR, endTime - startTime + "毫秒");
-
-        PrintUtil.printSudokuCell(sudoku);
-
-        if(sudoku.isCompeled() && sudoku.checkDuplication()){
-            PrintUtil.printLog("都被正确填充");
-        }else if(!sudoku.isCompeled()){
-            PrintUtil.printLog("未填充完成");
-        }else{
-            PrintUtil.printLog("存在重复的单元");
-        }
+            long endTime = System.currentTimeMillis();
+            PrintUtil.printLog(LogLevel.ERR, endTime - startTime + "毫秒");
+//
+            if (sudoku1.isCompeled() && sudoku1.checkDuplication()) {
+                PrintUtil.printLog(LogLevel.ERR,"都被正确填充");
+            } else if (!sudoku1.isCompeled()) {
+                PrintUtil.printLog(LogLevel.ERR,"未完成填充");
+            } else {
+                PrintUtil.printLog(LogLevel.ERR,"存在重复的单元");
+            }
+//        }
 
 
     }
